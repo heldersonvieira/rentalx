@@ -3,13 +3,20 @@ import { ICategoriesRepository } from '../../modules/cars/repositories/ICategori
 import { CategoriesRepository } from '../../modules/cars/repositories/implementations/CategoriesRepository';
 import { ISpecificationsRepository } from '../../modules/cars/repositories/ISpecificationsRepository';
 import { SpecificationsRepository } from '../../modules/cars/repositories/implementations/SpecificationsRepository';
+import { IUsersRepository } from '../../modules/accounts/repositories/IUsersRepository';
+import { UsersRepository } from '../../modules/accounts/repositories/implementations/UsersRespository';
 
 container.registerSingleton<ICategoriesRepository>(
     'CategoriesRepository',
-    CategoriesRepository   
-)
+    CategoriesRepository
+);
 
 container.registerSingleton<ISpecificationsRepository>(
     'SpecificationsRepository',
-    SpecificationsRepository   
-)
+    SpecificationsRepository
+);
+
+container.registerSingleton<IUsersRepository>(
+    'UsersRepository',
+    UsersRepository
+);
