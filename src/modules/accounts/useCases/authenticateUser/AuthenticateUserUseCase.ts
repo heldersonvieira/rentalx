@@ -6,6 +6,7 @@ import { AppErros } from '../../../../shared/errors/AppErros';
 import { IUsersTokensRepository } from '../../repositories/IUsersTokensRepository';
 import auth from '../../../../config/auth';
 import { IDateProvider } from '../../../../shared/container/providers/DateProvider/IDateProvider';
+import dayjs from 'dayjs';
 
 interface IRequest {
     email: string;
@@ -24,58 +25,126 @@ interface IResponse {
 @injectable()
 class AuthenticateUserUseCase {
     constructor(
-        @inject('UsersRepository')
-        private usersRepository: IUsersRepository,
-        @inject('UsersTokensRepository')
-        private usersTokensRepository: IUsersTokensRepository,
-        @inject('DayjsDateProvider')
-        private dayjsDateProvider: IDateProvider
+      @inject("UsersRepository")
+      private usersRepository: IUsersRepository,
+      @inject("UsersTokensRepository")
+      private usersTokensRepository: IUsersTokensRepository,
+      @inject("DayjsDateProvider")
+      private dateProvider: IDateProvider
     ) {}
-
+  
     async execute({ email, password }: IRequest): Promise<IResponse> {
-        const user = await this.usersRepository.findByEmail(email);
-
-        if (!user) {
-            throw new AppErros('Email or password incorrect');
-        }
-
-        const passwordMatch = await compare(password, user.password);
-
-        if (!passwordMatch) {
-            throw new AppErros('Email or password incorrect');
-        }
-
-        const token = sign({}, auth.secret_token, {
-            subject: user.id,
-            expiresIn: auth.expires_in_tken,
-        });
-
-        const refresh_token = sign({ email }, auth.secret_refresh_token, {
-            subject: user.id,
-            expiresIn: auth.expires_in_refresh_token,
-        });
-
-        const refresh_token_expires_date = this.dayjsDateProvider.addDays(
-            auth.expires_refresh_token_days
-        );
-
-        await this.usersTokensRepository.create({
-            user_id: user.id,
-            refresh_token,
-            expires_date: refresh_token_expires_date,
-        });
-
-        const tokenReturn = {
-            user: {
-                name: user.name,
-                email: user.email,
-            },
-            token,
-            refresh_token,
-        };
-
-        return tokenReturn;
+      const user = await this.usersRepository.findByEmail(email);
+      const {
+        expires_in_token,
+        secret_refresh_token,
+        secret_token,
+        expires_in_refresh_token,
+        expires_refresh_token_days,
+      } = auth;
+  
+      if (!user) {
+        throw new AppErros("Email or password incorrect");
+      }
+  
+      const passwordMatch = await compare(password, user.password);
+  
+      if (!passwordMatch) {
+        throw new AppErros("Email or password incorrect");
+      }
+  
+      const token = sign({}, secret_token, {
+        subject: user.id,
+        expiresIn: expires_in_token,
+      });
+  
+      const refresh_token = sign({ email }, secret_refresh_token, {
+        subject: user.id,
+        expiresIn: expires_in_refresh_token,
+      });
+  
+      const refresh_token_expires_date = this.dateProvider.addDays(
+        expires_refresh_token_days
+      );
+  
+      await this.usersTokensRepository.create({
+        user_id: user.id,
+        refresh_token,
+        expires_date: refresh_token_expires_date,
+      });
+  
+      const tokenReturn: IResponse = {
+        token,
+        user: {
+          name: user.name,
+          email: user.email,
+        },
+        refresh_token,
+      };
+  
+      return tokenReturn;
     }
+// class AuthenticateUserUseCase {
+//     constructor(
+//         @inject('UsersRepository')
+//         private usersRepository: IUsersRepository,
+//         @inject('UsersTokensRepository')
+//         private usersTokensRepository: IUsersTokensRepository,
+//         @inject('DayjsDateProvider')
+//         private dayjsDateProvider: IDateProvider
+//     ) {}
+
+//     async execute({ email, password }: IRequest): Promise<IResponse> {
+//         const user = await this.usersRepository.findByEmail(email);
+//         const {
+//             secret_token,
+//             secret_refresh_token,
+//             expires_in_refresh_token,
+//             expires_in_token,
+//             expires_refresh_token_days,
+//         } = auth;
+
+//         if (!user) {
+//             throw new AppErros('Email or password incorrect');
+//         }
+
+//         const passwordMatch = await compare(password, user.password);
+
+//         if (!passwordMatch) {
+//             throw new AppErros('Email or password incorrect');
+//         }
+
+//         const token = sign({}, secret_token, {
+//             subject: user.id,
+//             expiresIn: expires_in_token,
+//         });
+
+//         const refresh_token = sign({ email }, secret_refresh_token, {
+//             subject: user.id,
+//             expiresIn: expires_in_refresh_token,
+//         });
+
+//         const refresh_token_expires_date = this.dayjsDateProvider.addDays(
+//             expires_refresh_token_days
+//         );
+        
+//         await this.usersTokensRepository.create({
+//             user_id: user.id,
+//             refresh_token,
+//             expires_date: refresh_token_expires_date,
+//         });
+
+//         const tokenReturn = {
+//             user: {
+//                 name: user.name,
+//                 email: user.email,
+//             },
+//             token,
+//             refresh_token,
+//         };
+        
+//         return tokenReturn;
+//     }
 }
 
 export { AuthenticateUserUseCase };

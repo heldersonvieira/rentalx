@@ -10,6 +10,11 @@ interface IPayLoad {
     email: string;
 }
 
+interface ITokensReponse {
+    token: string;
+    refresh_token: string;
+}
+
 @injectable()
 class RefreshTokenUseCase {
     constructor(
@@ -19,10 +24,12 @@ class RefreshTokenUseCase {
         private dayjsDateProvider: IDateProvider
     ) {}
 
-    async execute(token: string): Promise<string> {
-        const { email, sub } = verify(token, auth.secret_refresh_token) as IPayLoad;
-        // console.log(email, sub);
-        
+    async execute(token: string): Promise<ITokenResponse> {
+        const { email, sub } = verify(
+            token,
+            auth.secret_refresh_token
+        ) as IPayLoad;
+
         const user_id = sub;
         const userToken =
             await this.usersTokensRepository.findByUserIdAndRefreshToken(
@@ -31,8 +38,7 @@ class RefreshTokenUseCase {
             );
 
         if (!userToken) throw new AppErros('Refresh token does not exists');
-        console.log(userToken);
-        
+
         await this.usersTokensRepository.deleteById(userToken.id);
 
         const refresh_token = sign({ email }, auth.secret_refresh_token, {
@@ -50,7 +56,12 @@ class RefreshTokenUseCase {
             user_id,
         });
 
-        return refresh_token;
+        const newToken = sign({}, auth.secret_token, {
+            subject: user_id,
+            expiresIn: auth.expires_in_token,
+        });
+
+        return { token: newToken, refresh_token };
     }
 }
 

@@ -21,7 +21,7 @@ describe('Create Category Controller', () => {
         `);
     });
 
-    afterAll(async () => {
+    afterEach(async () => {
         await connection.dropDatabase();
         await connection.close();
     });
@@ -31,7 +31,7 @@ describe('Create Category Controller', () => {
             email: 'admin@rentalx.com.br',
             password: 'admin',
         });
-        const { token } = responseToken.body;
+        const { refresh_token } = responseToken.body;
 
         await request(app)
             .post('/categories')
@@ -39,7 +39,7 @@ describe('Create Category Controller', () => {
                 name: 'Test',
                 description: 'Testing list all',
             })
-            .set({ Authorization: `Bearer ${token}` });
+            .set({ Authorization: `Bearer ${refresh_token}` });
 
         const response = await request(app).get('/categories');
 

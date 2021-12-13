@@ -13,8 +13,6 @@ class ListRentalsByUserUseCase {
         const rentalsByUser = await this.rentalsRepositoy.findByUser(
             user_id
         );
-        console.log(user_id);        
-        
         return rentalsByUser;
     }   
 }

@@ -1,7 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
 import { verify } from 'jsonwebtoken';
 import { AppErros } from '../../../errors/AppErros';
-import { UsersRepository } from '../../../../modules/accounts/infra/typeorm/repositories/UsersRespository';
+import { UsersTokensRepository } from '../../../../modules/accounts/infra/typeorm/repositories/UsersTokensRepository';
+import auth from '../../../../config/auth';
 
 interface IPayload {
     sub: string;
@@ -23,17 +24,10 @@ export async function ensureAuthenticated(
     try {
         const { sub: user_id } = verify(
             token,
-            'b9b3527123d1a59e9f897a62154e051e'
+            auth.secret_token
         ) as IPayload;
 
-        const usersRepository = new UsersRepository();
-        const user = await usersRepository.findById(user_id);
-
-        if (!user) {
-            throw new AppErros('User does not exists', 401);
-        }
-
-        // inserindo o user dentro da requisição, 
+        // inserindo o user dentro da requisição,
         // para ser pegue no UpdateUserAvatarController
         request.user = {
             id: user_id,
