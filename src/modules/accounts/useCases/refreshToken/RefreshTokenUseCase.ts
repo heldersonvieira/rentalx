@@ -10,7 +10,7 @@ interface IPayLoad {
     email: string;
 }
 
-interface ITokensReponse {
+interface ITokenResponse {
     token: string;
     refresh_token: string;
 }
